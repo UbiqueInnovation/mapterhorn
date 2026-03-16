@@ -47,7 +47,7 @@ def main():
     print(f'Found these nodata values: {nodata_values}')
     print(f'Will set nodata on {len(argument_tuples)} files. Nothing to do for the remaining {len(filepaths) - len(argument_tuples)} files...')
     with Pool() as pool:
-        pool.starmap(set_nodata, argument_tuples)
+        pool.starmap(set_nodata, argument_tuples, chunksize=1)
 
 if __name__ == '__main__':
     main()
