@@ -15,22 +15,22 @@ def main():
     source = None
     nodata = None
     force = False
+    dry_run = False
     if len(sys.argv) > 2:
         source = sys.argv[1]
         nodata = sys.argv[2]
-        print(f'setting nodata={nodata} for source={source}...')
-    else:
-        print('arguments missing, usage: python source_set_nodata.py {{source}} {{nodata}} [--force]')
-        exit()
-    
-    if len(sys.argv) == 4:
-        if sys.argv[3] == '--force':
+        print(f'source={source}...')
+        if '--force' in sys.argv:
             force = True
-            print('Force NODATA overwrite on all files.')
-        else:
-            print('unkown third argument, usage: python source_set_nodata.py {{source}} {{nodata}} [--force]')
-            exit()
-    
+            print('Force NODATA overwrite on all files...')
+        
+        if '--dry-run' in sys.argv:
+            dry_run = True
+            print('Only list existing NODATA values and exit...')
+    else:
+        print('arguments missing, usage: python source_set_nodata.py {{source}} {{nodata}} [--force] [--dry-run]')
+        exit()
+        
     filepaths = sorted(glob(f'source-store/{source}/*'))
 
     argument_tuples = []
@@ -44,7 +44,11 @@ def main():
             else:
                 nodata_values.add(src.nodata)
 
-    print(f'Found these nodata values: {nodata_values}')
+    print(f'Found these nodata value(s):')
+    for v in nodata_values:
+        print(f'  {v}')
+    if dry_run or nodata is None:
+        exit()
     print(f'Will set nodata on {len(argument_tuples)} files. Nothing to do for the remaining {len(filepaths) - len(argument_tuples)} files...')
     with Pool() as pool:
         pool.starmap(set_nodata, argument_tuples, chunksize=1)

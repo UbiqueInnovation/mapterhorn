@@ -17,15 +17,15 @@ def main():
     source = None
     crs = None
 
-    if len(sys.argv) == 3:
+    if '--dry-run' in sys.argv:
+        source = sys.argv[1]
+        print(f'only listing crses for source {source}...')
+    elif len(sys.argv) == 3:
         source = sys.argv[1]
         crs = sys.argv[2]
         print(f'setting crs="{crs}" for source {source}...')
-    elif len(sys.argv) == 2:
-        source = sys.argv[1]
-        print(f'only listing crses for source {source}...')
     else:
-        print('wrong number of arguments: source_set_crs.py source [crs]')
+        print('wrong number of arguments: source_set_crs.py source [crs] [--dry-run]')
         exit()
     
     filepaths = sorted(glob(f'source-store/{source}/*.tif'))
