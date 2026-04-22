@@ -15,7 +15,7 @@ def create_virtual_raster(tmp_folder, i, source_items):
     input_file_list_path = f'{tmp_folder}/{i}-file-list.txt'
     with open(input_file_list_path, 'w') as f:
         for source_item in source_items:
-            f.write(f'source-store/{source}/{source_item["filename"]}\n')
+            f.write(f'source-store/{source}/files/{source_item["filename"]}\n')
     command = f'gdalbuildvrt -overwrite -input_file_list {input_file_list_path} {vrt_filepath}'
     out, err = utils.run_command(command, silent=SILENT)
     if not SILENT:
@@ -40,6 +40,7 @@ def create_warp(vrt_filepath, vrt_3857_filepath, zoom, aggregation_tile, buffer)
     command += f'-te {left} {bottom} {right} {top} '
     command += '-r cubicspline '
     command += '-dstnodata -9999 '
+    command += '-to ALLOW_BALLPARK=NO '
     command += f'{vrt_filepath} {vrt_3857_filepath}'
     out, err = utils.run_command(command, silent=SILENT)
     if err.strip() != '':

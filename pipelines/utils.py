@@ -54,7 +54,7 @@ def save_terrarium_tile(data, filepath):
     # full terrarium resolution of 1/256 at `full_resolution_zoom`
     # multiples of 2 of full terrarium resolution at lower zooms
     full_resolution_zoom = 19
-    factor = 2 ** (full_resolution_zoom - z) / 256 
+    factor = 2 ** (full_resolution_zoom - z) / 256
     data = np.round(data / factor) * factor
 
     data += 32768
@@ -130,10 +130,10 @@ def get_aggregation_item_string(aggregation_id, filename):
     filepath = f'aggregation-store/{aggregation_id}/{filename}'
     if not os.path.isfile(filepath):
         return None
-    
+
     with open(filepath) as f:
         result = ''.join([l.strip() for l in f.readlines()])
-    
+
     return result.strip()
 
 def get_dirty_aggregation_filenames(current_aggregation_id, last_aggregation_id):
@@ -152,13 +152,20 @@ def get_dirty_aggregation_filenames(current_aggregation_id, last_aggregation_id)
     return dirty_filenames
 
 def get_pmtiles_folder(x, y, z):
+    return get_target_folder(x, y, z, 'pmtiles-store')
+
+def get_geotiff_folder(x, y, z):
+    return get_target_folder(x, y, z, 'geotiff-store')
+
+def get_target_folder(x: int, y: int, z: int, base_path: str) -> str:
     if z < 7:
-        return 'pmtiles-store'
+        return base_path
+
     if z == 7:
-        return f'pmtiles-store/{z}-{x}-{y}'
-    else:
-        parent = mercantile.parent(mercantile.Tile(x=x, y=y, z=z), zoom=7)
-        return f'pmtiles-store/{parent.z}-{parent.x}-{parent.y}'
+        return f'{base_path}/{z}-{x}-{y}'
+
+    parent = mercantile.parent(mercantile.Tile(x=x, y=y, z=z), zoom=7)
+    return f'{base_path}/{parent.z}-{parent.x}-{parent.y}'
 
 # group source items by maxzoom and source
 def get_grouped_source_items(filepath):
