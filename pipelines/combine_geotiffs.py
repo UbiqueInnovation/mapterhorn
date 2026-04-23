@@ -33,8 +33,9 @@ def find_sources_for_zoom(zoom: int, tile_paths: list[str]) -> list[str]:
 
 
 def create_combined(zoom, source_paths: list[str]):
-    target_path = f"geotiff-store/z{zoom}.vrt"
-    input_file_list_path = f"z{zoom}-sources.txt"
+    target_prefix = f"geotiff-store/z{zoom}"
+    target_path = f"{target_prefix}.vrt"
+    input_file_list_path = f"{target_prefix}-sources.txt"
     with open(input_file_list_path, "w") as f:
         f.write("\n".join(source_paths))
     command = f"gdalbuildvrt -overwrite -input_file_list {input_file_list_path} {target_path}"
