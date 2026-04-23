@@ -1,6 +1,5 @@
 import os
 import shutil
-from glob import glob
 from multiprocessing import Pool
 
 import mercantile
@@ -8,25 +7,8 @@ from mercantile import Tile
 from rasterio.crs import defaultdict
 
 import utils
-from pipelines import aggregation_reproject
-
-
-def find_existing_geo_tiffs() -> dict[Tile, str]:
-    geo_tiff_paths = glob("geotiff-store/**/*.tif", recursive=True)
-    tiles = {}
-    for path in geo_tiff_paths:
-        filename = path.split("/")[-1].removesuffix(".tif")
-
-        parts = filename.split("-")
-        if len(parts) != 4 or not all(part.isdigit() for part in parts):
-            print(f"Ignoring geotiff: {filename}")
-            os.remove(path)
-            continue
-
-        z, x, y, _ = parts
-        tile = Tile(x=int(x), y=int(y), z=int(z))
-        tiles[tile] = path
-    return tiles
+import aggregation_reproject
+from utils_geotiff import find_existing_geo_tiffs, get_child_z, get_tile
 
 
 def new_tile_path(tile: Tile, source_paths: list[str]) -> str:
@@ -36,14 +18,12 @@ def new_tile_path(tile: Tile, source_paths: list[str]) -> str:
 
 
 def determine_new_child_z(tile: Tile, source_paths: list[str]) -> int:
-    source_max_child_z = max(
-        int(path.split("/")[-1].removesuffix(".tif").split("-")[-1])
-        for path in source_paths
-    )
+    source_max_child_z = max(get_child_z(path) for path in source_paths)
     return min(source_max_child_z, tile.z + 6)
 
 
-def find_tiles_to_create(tiles: dict[Tile, str]) -> list[tuple[Tile, list[str]]]:
+def find_tiles_to_create(tile_paths: list[str]) -> list[tuple[Tile, list[str]]]:
+    tiles = {get_tile(path): path for path in tile_paths}
     max_z = max(tile.z for tile in tiles.keys())
 
     tiles_to_create: list[tuple[Tile, list[str]]] = []
@@ -83,7 +63,8 @@ def create_tile(tile: Tile, source_paths: list[str]) -> None:
     command += " --src-nodata -9999 --dst-nodata -9999"
     out, err = utils.run_command(command)
     if err.strip() != "":
-        raise IOError(f"gdal raster mosaic failed for {target_path}:\n{out}\n{err}")
+        print(f"gdal raster mosaic failed for {target_path}:\n{out}\n{err}")
+        return
 
     target_path_tmp = f"{target_prefix}.tmp.tif"
     command = f"gdalwarp {mosaic_path} {target_path_tmp}"

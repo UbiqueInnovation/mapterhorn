@@ -2,6 +2,8 @@ import os
 import shutil
 from glob import glob
 
+import mercantile
+
 import utils
 
 
@@ -26,8 +28,10 @@ def main(filepath: str) -> None:
     num_tiff_files = len(glob(f"{tmp_folder}/*.tiff"))
     tiff_filepath = f"{tmp_folder}/{num_tiff_files - 1}-3857.tiff"
     cog_filepath = f"{tmp_folder}/{num_tiff_files - 1}-3857-cog.tiff"
+    left, bottom, right, top = mercantile.xy_bounds(mercantile.Tile(x=x, y=y, z=z))
 
     command = f"gdal_translate {tiff_filepath} {cog_filepath}"
+    command += f" -projwin {left} {top} {right} {bottom}" # removes buffer
     command += " -of COG"
     command += " -co BIGTIFF=IF_NEEDED -co ADD_ALPHA=YES -co OVERVIEWS=NONE"
     command += " -co BLOCKSIZE=512 -co COMPRESS=LERC -co MAX_Z_ERROR=0.001"
